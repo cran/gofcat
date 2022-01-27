@@ -1,0 +1,138 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+# gofcat
+
+<!-- badges: start -->
+
+[![Project Status: Active – The project has reached a stable, usable
+state and is being
+activelydeveloped](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![license](https://img.shields.io/badge/license-GPL--2-blue.svg)](https://www.gnu.org/licenses/gpl-2.0.en.html)
+[![R build
+status](https://github.com/ejikeugba/gofcat/workflows/R-CMD-check/badge.svg)](https://github.com/ejikeugba/gofcat/actions)
+[![AppVeyor build
+status](https://ci.appveyor.com/api/projects/status/github/ejikeugba/gofcat?branch=main&svg=true)](https://ci.appveyor.com/project/ejikeugba/gofcat)
+<!-- badges: end -->
+
+#### Overview
+
+Crucial post-estimation (goodness-of-fit) tests for some widely used
+categorical response models (CRM) are implemented in this package. It
+currently supports inputs from objects of class serp(), clm(), polr(),
+multinom(), mlogit(), vglm() and glm(). Available tests include the
+Hosmer-Lemeshow tests for the binary, multinomial and ordinal logistic
+regression; the Lipsitz and the Pulkstenis-Robinson tests for the
+ordinal models. The proportional odds, adjacent-category, and
+constrained continuation-ratio models are particularly supported at
+ordinal level. Tests for the proportional odds assumptions in ordinal
+models are also possible with the Brant and the Likelihood-Ratio tests.
+Moreover, several summary measures of predictive strength (Pseudo
+R-squared), and some useful error metrics, including, the brier score,
+misclassification rate and logloss are also available for the binary,
+multinomial and ordinal models.
+
+#### Example
+
+``` r
+require(serp)
+set.seed(1)
+n <- 200
+dt <- data.frame(y = ordered(rbinom(n,2,0.5)), x1 = factor(rbinom(n,2,0.7)), x2 = runif(n))
+sp <- serp(y ~ x1 + x2, slope="parallel", link = "logit", reverse= TRUE, data = dt)
+```
+
+``` r
+## Goodness-of-fit
+# Hosmer-Lemeshow test
+hosmerlem(sp, tables = TRUE)
+hosmerlem(sp, tables = TRUE, customFreq = rep(20,10))
+
+# Lipsitz test
+lipsitz(sp)
+lipsitz(sp, customFreq = rep(20, 10))
+
+# Pulkstenis-Robinson test
+pulkroben(sp, test = "chisq", tables = TRUE)
+pulkroben(sp, test = "deviance", tables = TRUE)
+```
+
+``` r
+## Proportional odds test
+brant.test(sp)
+brant.test(sp, global = TRUE, call = TRUE)
+LR.test(sp, call = TRUE)
+```
+
+``` r
+## Error metrics
+erroR(sp, type = "brier")
+erroR(sp, type = "logloss")
+erroR(sp, type = "misclass")
+
+# with dataframe and custom threshold
+df <- data.frame(y, sp$fitted.values)
+erroR(df, type = "misclass", thresh = 0.7)
+```
+
+``` r
+## Summary metrics
+Rsquared(sp, measure = "ugbagerth")
+Rsquared(sp, measure = "mcfadden")
+```
+
+#### Installation and Use
+
+##### Dependencies
+
+Before installing `gofcat`, it is encouraged to have a recent version of
+[R](https://cran.r-project.org/bin/windows/base/) installed. Also expect
+an automatic installation of some few dependencies.
+
+##### Installation
+
+The development version of `gofcat` can be installed from
+[GitHub](https://github.com/ejikeugba/gofcat) with:
+
+``` r
+if (!require("devtools")) install.packages("devtools")
+devtools::install_github("ejikeugba/gofcat")
+```
+
+##### Loading
+
+Load `gofcat` into R environment with:
+
+``` r
+library(gofcat)
+```
+
+#### Community Guidelines
+
+Pull requests are welcomed! Please submit your contributions to `gofcat`
+through the list of `Pull Requests`, following the [contributing
+guidelines](https://github.com/ejikeugba/gofcat/blob/main/.github/contributing.md).
+To report issues and/or seek support, please file a new ticket in the
+[issue](https://github.com/ejikeugba/gofcat/issues) tracker, and expect
+a feedback ASAP!
+
+#### Code of Conduct
+
+Please note that `gofcat` is released with a [Contributor Code of
+Conduct](https://github.com/ejikeugba/gofcat/blob/main/CODE_OF_CONDUCT.md).
+By contributing to this project, you agree to abide by its terms.
+
+#### References
+
+Fagerland, M. W. and Hosmer, D. W. (2017). How to test for goodness of
+fit in ordinal logistic regression models. *Stata Journal*, 17, 668-686.
+<https://doi.org/10.1177/1536867X1701700308>
+
+Ugba, E. R. and Gertheiss, J. (2018). An Augmented Likelihood Ratio
+Index for Categorical Response Models. In *Proceedings of 33rd
+International Workshop on Statistical Modelling*, Bristol, 293-298.
+<http://www.statmod.org/workshops_archive_proceedings_2018.html>
+
+Ugba, E. R. (2021). serp: An R package for smoothing in ordinal
+regression *Journal of Open Source Software*, 6(66), 3705.
+<https://doi.org/10.21105/joss.03705>
