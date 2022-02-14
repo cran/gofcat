@@ -4,17 +4,29 @@ get_logLik <- function(model){
   if (inherits(Lf,"try-error") || is.na(Lf) || is.infinite(Lf) || is.null(Lf))
     Lf <- try(model$logLik, silent = TRUE)
   suppressWarnings(capture <- capture.output(
-    L0 <- try(logLik(update(model, .~1)), silent = TRUE)))
-  if (inherits(L0,"try-error") || is.null(L0) || is.na(L0) || is.infinite(L0))
+    mod <- try(update(model, .~1), silent = TRUE)))
+
+  if (inherits(mod,"try-error") && !isS4(model))
     suppressWarnings(capture <- capture.output(
-      L0 <- as.numeric(try(update(model, .~1)$logLik, silent = TRUE))))
+    mod <- try(update(model, .~1, data = model$model), silent = TRUE)))
+
+  if (inherits(mod,"try-error") && isS4(model))
+    suppressWarnings(capture <- capture.output(
+    mod <- try(update(model, .~1, data = model@model), silent = TRUE)))
+
+  L0 <- try(logLik(mod), silent = TRUE)
+  if (inherits(L0,"try-error") || is.null(L0) || is.na(L0) ||
+      is.infinite(L0))
+    if (!isS4(mod))
+      L0 <- try(mod$logLik, silent = TRUE)
   if (inherits(Lf,"try-error") ||
       inherits(L0,"try-error") ||
       is.na(L0) ||
       is.na(Lf) ||
       is.infinite(L0) ||
       is.infinite(Lf)){
-    Lf <- L0 <- NA
+    Lf <- NA
+    L0 <- NA
     bL <- TRUE
   }
   list(Lf=Lf, L0=L0, badlogL=bL)
@@ -129,9 +141,9 @@ zeros <- function(x.var, arg.data, m){
   }
 }
 
+
 R2index <- function(model, measure, modeltype){
   loglk <- get_logLik(model)
-  if (loglk$badlogL) stop("could not access model logLikelihood!")
   Lf <- loglk$Lf
   L0 <- loglk$L0
   dv <- -2 * Lf
@@ -147,27 +159,25 @@ R2index <- function(model, measure, modeltype){
   k <- mi$k
   n <- mi$n
   p <- mi$p
+  ms <- c("mcfadden", "ugba")
   if (measure == "mcfadden"){
     h1 <- 1 - rho
     h2 <- 1 - ((Lf-p)/L0)
   }
-  else if (measure == "ugba"){
+  if (measure == "ugba"){
     h1 <- 1 - (rho)^{sqrt(2*k)}
     h2 <- 1 - (rho)^{log2(2*k)}
   }
-  else if (measure == "nagelkerke") h1 <- (1 - exp((dv - d0)/n))/(1 - exp(-d0/n))
-  else if (measure == "coxsnell") h1 <- 1 - exp(-G2/n)
-  else if (measure == "aldrich") h1 <- G2 / (G2 + n)
-  else if (measure == "veall") h1 <- (G2 / (G2 + n)) * ((n - (2 * L0)) / (-2 * L0))
-  else if (measure == "mckelvey") h1 <- vr / (vr + err)
-  else if (measure == "efron") h1 <- 1 - (sum((cp[,1L] - cp[,2L])^{2}) / sum((cp[,1L] - mean(cp[,1L]))^{2}))
-  else if (measure == "tjur") h1 <- mean(gp2[,2L]) - mean(gp1[,2L])
-  ms <- c("mcfadden", "ugba")
+  if (measure == "nagelkerke") h1 <- (1 - exp((dv - d0)/n))/(1 - exp(-d0/n))
+  if (measure == "coxsnell") h1 <- 1 - exp(-G2/n)
+  if (measure == "aldrich") h1 <- G2 / (G2 + n)
+  if (measure == "veall") h1 <- (G2 / (G2 + n)) * ((n - (2 * L0)) / (-2 * L0))
+  if (measure == "mckelvey") h1 <- vr / (vr + err)
+  if (measure == "efron") h1 <- 1 - (sum((cp[,1L] - cp[,2L])^{2}) / sum((cp[,1L] - mean(cp[,1L]))^{2}))
+  if (measure == "tjur") h1 <- mean(gp2[,2L]) - mean(gp1[,2L])
   if (!measure %in% ms) h2 <- NA
-  list(h1, h2)
+  list(as.numeric(h1), as.numeric(h2))
 }
-
-
 
 modelInfo <- function(model, modeltype, measure)
 {
@@ -176,27 +186,23 @@ modelInfo <- function(model, modeltype, measure)
     k <- nlevels(factor(model$model[,1L]))
     n <- length(model$y)
     p <- length(model$coefficients)
-    ft <- cbind(as.numeric_version(model$model[,1L]))
+    ft <- try(cbind(as.numeric_version(model$model[,1L])), silent = TRUE)
+    if (inherits(ft, "try-error")){
+      ft <- cbind(as.numeric(model$model[,1L]) - 1L)
+    }
     tr <- as.numeric(model$fitted.values)
     lp <- as.numeric(model$linear.predictors)
     cp <- as.matrix.data.frame(cbind(ft, tr, lp))
   }
   if (modeltype == "vglm"){
     k <- length(model@misc$ynames)
-    n <- nrow(model@y)
-    p <- length(model@coefficients)
-
-    if (length(table(VGAM::model.frame(model)[,1L]))==2L){
-      ft <- cbind(as.numeric_version(VGAM::model.frame(model)[,1L]))
-      tr <- as.numeric(VGAM::fitted(model)[,2L])
-      lp <- as.numeric(VGAM::predictors(model))
-      cp <- as.matrix.data.frame(cbind(ft, tr, lp))
-    } else stop("measure is not available for multi-categorical models")
+    n <- nrow(depvar(model))
+    p <- length(VGAM::coef(model))
   }
   if (modeltype == "multinom"){
     k <- length(model$lev)
     n <- nrow(model$fitted.values)
-    p <- length(coef(model))
+    p <- length(stats::coef(model))
   }
   if (modeltype == "clm"){
     k <- nlevels(model$y)
@@ -219,18 +225,49 @@ modelInfo <- function(model, modeltype, measure)
     p <- length(model$coefficients)
   }
   gp1 <- gp2 <- vr <- err <- NA
-  if (modeltype=="glm" || modeltype=="vglm"){
+  ms <- c("mckelvey", "efron", "tjur")
+  lf <- c("logit", "probit", "cloglog")
+  if (any(measure == (ms)) && modeltype=="glm") {
     gp1  <- subset(cp, cp[,1] < 1)
     gp2  <- subset(cp, cp[,1] > 0)
     vr <- var(cp[,3])/(n/(n - 1))
-    lk <- if (modeltype=="glm") model$family$link else VGAM::linkfun(model)
-
-    if (lk == "logit" || lk == "logitlink") err = ((pi)^{2})/3
-    else if (lk == "probit" || lk == "probitlink") err = 1
-    else if (lk == "cloglog" || lk == "clogloglink") err = ((pi)^{2})/6
-    else if (measure == "mckelvey")
+    lk <- model$family$link
+    if (lk == lf[1L]) err = ((pi)^{2})/3
+    else if (lk == lf[2L]) err = 1
+    else if (lk == lf[3L]) err = ((pi)^{2})/6
+    else if (measure == "mckelvey" && !(lk %in% lf))
       stop("Unsupported link function!", call. = FALSE)
   }
   list(k=k, n=n, p=p, gp1=gp1, gp2=gp2, vr=vr, err=err, cp=cp)
 }
 
+longDt <- function(model, m) {
+  mr <- model.response(m)
+  colns <- colnames(mr)
+  vb <- setdiff(all.vars(formula(model)), colns)
+  pk <- apply(mr, 1, function(x) rep(colns, x))
+  rs <- unlist(pk)
+  names(rs) <- NULL
+  rs <- ordered(rs, levels = colns)
+  wts <- cbind(rowSums(mr))
+  indpv <- subset(m, select = vb)
+  nc <- ncol(indpv)
+  rp <- matrix(rep(wts, nc), nrow(wts), nc)
+  pp <- matrix(0, sum(wts), nc)
+  for(i in seq_len(nc)){
+    pp[,i] <- rep(indpv[,i], wts)
+  }
+  ld <- data.frame(rs, pp)
+  colnames(ld) <- c("resp", vb)
+  cl <- lapply(m[,vb, drop = FALSE], class)
+  tt <- ld[vb]
+  for(i in 1:length(cl)){
+    ff <- cl[[i]][1L]
+    if (ff=="numeric") tt[,i] <- as.numeric(tt[,i])
+    if (ff=="factor") tt[,i] <- as.factor(tt[,i])
+    if (ff=="ordered") tt[,i] <- as.ordered(tt[,i])
+    if (ff=="character") tt[,i] <- as.character(tt[,i])
+  }
+  res <- data.frame(resp=rs, tt)
+  res
+}

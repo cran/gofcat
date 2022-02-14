@@ -8,14 +8,20 @@
 [![Project Status: Active – The project has reached a stable, usable
 state and is being
 activelydeveloped](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![Codecov test
+coverage](https://codecov.io/gh/ejikeugba/gofcat/branch/main/graph/badge.svg)](https://app.codecov.io/gh/ejikeugba/gofcat?branch=main)
+[![Total
+Downloads](http://cranlogs.r-pkg.org/badges/grand-total/gofcat)](https://CRAN.R-project.org/package=gofcat)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/gofcat)](https://CRAN.R-project.org/package=gofcat)
 [![license](https://img.shields.io/badge/license-GPL--2-blue.svg)](https://www.gnu.org/licenses/gpl-2.0.en.html)
-[![R build
-status](https://github.com/ejikeugba/gofcat/workflows/R-CMD-check/badge.svg)](https://github.com/ejikeugba/gofcat/actions)
 [![AppVeyor build
 status](https://ci.appveyor.com/api/projects/status/github/ejikeugba/gofcat?branch=main&svg=true)](https://ci.appveyor.com/project/ejikeugba/gofcat)
+[![R build
+status](https://github.com/ejikeugba/gofcat/workflows/R-CMD-check/badge.svg)](https://github.com/ejikeugba/gofcat/actions)
 <!-- badges: end -->
 
-#### Overview
+### Overview
 
 Crucial post-estimation (goodness-of-fit) tests for some widely used
 categorical response models (CRM) are implemented in this package. It
@@ -32,7 +38,7 @@ R-squared), and some useful error metrics, including, the brier score,
 misclassification rate and logloss are also available for the binary,
 multinomial and ordinal models.
 
-#### Example
+### Example
 
 ``` r
 require(serp)
@@ -77,21 +83,22 @@ erroR(df, type = "misclass", thresh = 0.7)
 
 ``` r
 ## Summary metrics
-Rsquared(sp, measure = "ugbagerth")
+Rsquared(sp, measure = "ugba")
 Rsquared(sp, measure = "mcfadden")
 ```
 
-#### Installation and Use
-
-##### Dependencies
+### Installation and Use
 
 Before installing `gofcat`, it is encouraged to have a recent version of
-[R](https://cran.r-project.org/bin/windows/base/) installed. Also expect
-an automatic installation of some few dependencies.
+[R](https://cran.r-project.org/bin/windows/base/) installed. The
+released version of `gofcat` can be installed from
+[CRAN](https://cran.r-project.org/package=gofcat) with:
 
-##### Installation
+``` r
+install.packages("gofcat")
+```
 
-The development version of `gofcat` can be installed from
+or the development version from
 [GitHub](https://github.com/ejikeugba/gofcat) with:
 
 ``` r
@@ -99,15 +106,13 @@ if (!require("devtools")) install.packages("devtools")
 devtools::install_github("ejikeugba/gofcat")
 ```
 
-##### Loading
-
 Load `gofcat` into R environment with:
 
 ``` r
 library(gofcat)
 ```
 
-#### Community Guidelines
+### Community Guidelines
 
 Pull requests are welcomed! Please submit your contributions to `gofcat`
 through the list of `Pull Requests`, following the [contributing
@@ -116,17 +121,16 @@ To report issues and/or seek support, please file a new ticket in the
 [issue](https://github.com/ejikeugba/gofcat/issues) tracker, and expect
 a feedback ASAP!
 
-#### Code of Conduct
+### Code of Conduct
 
 Please note that `gofcat` is released with a [Contributor Code of
 Conduct](https://github.com/ejikeugba/gofcat/blob/main/CODE_OF_CONDUCT.md).
 By contributing to this project, you agree to abide by its terms.
 
-#### References
+### References
 
 Fagerland, M. W. and Hosmer, D. W. (2017). How to test for goodness of
 fit in ordinal logistic regression models. *Stata Journal*, 17, 668-686.
-<https://doi.org/10.1177/1536867X1701700308>
 
 Ugba, E. R. and Gertheiss, J. (2018). An Augmented Likelihood Ratio
 Index for Categorical Response Models. In *Proceedings of 33rd

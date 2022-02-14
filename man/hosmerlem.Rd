@@ -75,7 +75,7 @@ ordinal Hosmer-Lemeshow test with the lipsitz and the Pulkstenis-Robinson
 tests (Fagerland and Hosmer, 2016; 2017).
 }
 \examples{
-require(gofcat)
+
 require(VGAM)
 
 # Binary L-H test
@@ -84,7 +84,7 @@ gm <- glm(rbinom(100,1,0.5) ~ rnorm(100), family=binomial)
 hosmerlem(gm, group = 10, customFreq = NULL, tables = TRUE)
 
 # multinomial L-H test
-vg <- vglm(RET ~ DIAB + GH + BP,
+vg <- vglm(RET ~ DIAB + GH + BP, model = TRUE,
            family = multinomial(parallel = TRUE), data = retinopathy)
 hosmerlem(vg)
 
